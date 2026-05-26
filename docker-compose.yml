@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: healthcare_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - healthcare-network
+
+  user-service:
+    build: ./user-service
+    ports:
+      - "5001:5001"
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/healthcare_db
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      SECRET_KEY: ${SECRET_KEY}
+    depends_on:
+      - postgres
+    networks:
+      - healthcare-network
+
+  appointment-service:
+    build: ./appointment-service
+    ports:
+      - "5002:5002"
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/healthcare_db
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      USER_SERVICE_URL: http://user-service:5001
+    depends_on:
+      - postgres
+      - user-service
+    networks:
+      - healthcare-network
+
+  report-service:
+    build: ./report-service
+    ports:
+      - "5003:5003"
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/healthcare_db
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
+      AWS_S3_REGION: ${AWS_S3_REGION}
+    depends_on:
+      - postgres
+    networks:
+      - healthcare-network
+
+volumes:
+  postgres_data:
+
+networks:
+  healthcare-network:
+    driver: bridge
