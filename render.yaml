@@ -6,7 +6,6 @@ databases:
     region: singapore
 
 services:
-  # ── User Service ───────────────────────────────────────────────
   - type: web
     name: healthcare-user-svc
     runtime: python
@@ -30,7 +29,6 @@ services:
       - key: OTEL_SERVICE_NAME
         value: user-service
 
-  # ── Appointment Service ────────────────────────────────────────
   - type: web
     name: healthcare-appt-svc
     runtime: python
@@ -57,7 +55,6 @@ services:
       - key: OTEL_SERVICE_NAME
         value: appointment-service
 
-  # ── Report Service ─────────────────────────────────────────────
   - type: web
     name: healthcare-report-svc
     runtime: python
@@ -90,17 +87,14 @@ services:
       - key: OTEL_SERVICE_NAME
         value: report-service
 
-  # ── Frontend Static Site ───────────────────────────────────────
-  - type: static
+  - type: web
     name: healthcare-app
+    runtime: node
+    plan: free
+    region: singapore
     rootDir: frontend
     buildCommand: npm install && npm run build
-    publishPath: build
-    pullRequestPreviews: no
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
+    startCommand: npx serve -s build -l $PORT
     envVars:
       - key: REACT_APP_USER_SERVICE_URL
         value: https://healthcare-user-svc.onrender.com
