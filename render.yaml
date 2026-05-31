@@ -2,7 +2,6 @@ databases:
   - name: healthcare-db
     plan: free
     databaseName: healthcare_db
-    user: postgres
     region: singapore
 
 services:
