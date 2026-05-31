@@ -4,21 +4,24 @@ A comprehensive healthcare platform built with Flask microservices, PostgreSQL, 
 
 ## Architecture
 
-### 1. **User Service** (Port 5001)
-- User registration and authentication
+### 1. **Patient Service / User Service** (Port 5001)
+- Patient registration and authentication
 - JWT-based authentication
-- Role-based access control (Patient, Doctor, Admin)
 - User profile management
+- Doctor profile listing
 
 **Endpoints:**
 - `POST /register` - Register new user
 - `POST /login` - User login with JWT
-- `GET /users/profile` - Get user profile
-- `PUT /users/profile` - Update user profile
-- `GET /users/<id>` - Get user by ID (Admin/Doctor only)
+- `GET /users/profile` - Get your user profile
+- `PUT /users/profile` - Update your user profile
+- `GET /profile/<id>` - Get profile by user ID (self, doctor, admin)
+- `GET /doctors` - List doctors
+- `GET /doctors/<id>` - Get doctor details
 - `GET /health` - Health check
 
-### 2. **Appointment Service** (Port 5002)
+### 2. **Doctor Appointment Service** (Port 5002)
+- List doctors
 - Book appointments with doctors
 - View appointment history
 - Cancel appointments
@@ -26,23 +29,28 @@ A comprehensive healthcare platform built with Flask microservices, PostgreSQL, 
 - Prevent double bookings
 
 **Endpoints:**
-- `POST /appointments/book` - Book appointment
-- `GET /appointments/history` - View appointment history
+- `GET /doctors` - List available doctors
+- `POST /appointments` - Book appointment
+- `POST /appointments/book` - Book appointment alias
+- `GET /appointments/history` - View your appointment history
+- `GET /appointments/patient/<patientId>` - View appointments for a patient (doctor access)
 - `GET /appointments/<id>` - Get appointment details
-- `POST /appointments/<id>/cancel` - Cancel appointment
+- `DELETE /appointments/<id>` - Cancel appointment
+- `POST /appointments/<id>/cancel` - Cancel appointment alias
 - `POST /appointments/<id>/confirm` - Confirm appointment (Doctor)
 - `GET /health` - Health check
 
-### 3. **Report Service** (Port 5003)
+### 3. **Medical Report Service** (Port 5003)
 - Upload medical reports to AWS S3
 - List patient reports
 - Download reports with signed URLs
 - Delete reports
-- Manage report access (public/private)
+- Doctor access to patient reports
 
 **Endpoints:**
 - `POST /reports/upload` - Upload medical report
-- `GET /reports/list` - List all reports
+- `GET /reports/list` - List your reports
+- `GET /reports/patient/<patientId>` - List a patient's reports (doctor access)
 - `GET /reports/<id>` - Get report details
 - `GET /reports/<id>/download` - Download report (signed URL)
 - `DELETE /reports/<id>` - Delete report
@@ -217,6 +225,35 @@ See [DevSecOps Pipeline](https://github.com/ankit20000/DevSecops_Pipeline) for C
 - ✅ CORS Support (add as needed)
 - ✅ Input Validation
 - ✅ SQL Injection Protection (SQLAlchemy ORM)
+
+## Observability & AI Guidance
+
+### Logs vs traces
+- **Logs** are structured event records that capture messages, warnings, errors, and request context. They are useful for understanding what happened, why it failed, and which inputs triggered the behavior.
+- **Traces** are distributed execution paths that follow a request across service boundaries, showing latency, dependencies, and error boundaries.
+
+### Why observability matters in microservices
+- Microservices generate failures across network boundaries, async operations, and third-party integrations.
+- Logs and traces together reveal failures, latency hotspots, and cascading errors far faster than ad hoc debugging.
+- Correlation IDs connect HTTP requests, database events, and downstream service calls into one timeline.
+
+### What this repository now includes
+- Structured JSON logging with `INFO`, `WARN`, `ERROR`, and `DEBUG` level events.
+- Request correlation IDs propagated through incoming headers and returned in responses.
+- OpenTelemetry instrumentation with OTLP exporter configuration.
+- Docker-based collector to receive traces from the Flask services.
+
+### Failure and latency analysis
+- **Latency** can be identified by timing fields in logs and by slow spans in traces.
+- **Errors** appear as `ERROR` log entries, exception stacks, and failed spans.
+- **Cross-service failures** are easier to debug using `request_id` and `trace_id` correlation.
+
+### How AI tools help
+- Generate service boilerplate, validation, and error handlers.
+- Recommend observability libraries and SDK wiring.
+- Improve logging standards with consistent structured fields.
+- Suggest performance improvements, slow-path analysis, and debugging hypotheses.
+- Speed up root-cause analysis by correlating logs, traces, and service dependencies.
 
 ## Testing
 

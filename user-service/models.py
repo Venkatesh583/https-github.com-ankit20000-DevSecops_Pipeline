@@ -13,6 +13,7 @@ class User(db.Model):
     full_name = db.Column(db.String(120), nullable=False)
     role = db.Column(db.String(20), default='patient')  # patient, doctor, admin
     phone = db.Column(db.String(20))
+    specialization = db.Column(db.String(120))
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -29,6 +30,7 @@ class User(db.Model):
             'email': self.email,
             'full_name': self.full_name,
             'role': self.role,
+            'specialization': self.specialization,
             'phone': self.phone,
             'is_active': self.is_active,
             'created_at': self.created_at.isoformat()

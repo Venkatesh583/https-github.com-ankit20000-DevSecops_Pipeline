@@ -66,3 +66,8 @@ aws_credentials
 
 # S3 uploads (local)
 uploads/
+
+# Frontend
+frontend/node_modules/
+frontend/build/
+frontend/.env

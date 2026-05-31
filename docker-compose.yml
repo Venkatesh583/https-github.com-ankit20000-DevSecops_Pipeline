@@ -14,6 +14,17 @@ services:
     networks:
       - healthcare-network
 
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.105.0
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    networks:
+      - healthcare-network
+
   user-service:
     build: ./user-service
     ports:
@@ -22,8 +33,11 @@ services:
       DATABASE_URL: postgresql://postgres:password@postgres:5432/healthcare_db
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       SECRET_KEY: ${SECRET_KEY}
+      OTEL_SERVICE_NAME: user-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     depends_on:
       - postgres
+      - otel-collector
     networks:
       - healthcare-network
 
@@ -35,9 +49,12 @@ services:
       DATABASE_URL: postgresql://postgres:password@postgres:5432/healthcare_db
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       USER_SERVICE_URL: http://user-service:5001
+      OTEL_SERVICE_NAME: appointment-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     depends_on:
       - postgres
       - user-service
+      - otel-collector
     networks:
       - healthcare-network
 
@@ -52,8 +69,26 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET}
       AWS_S3_REGION: ${AWS_S3_REGION}
+      OTEL_SERVICE_NAME: report-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     depends_on:
       - postgres
+      - otel-collector
+    networks:
+      - healthcare-network
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    environment:
+      REACT_APP_USER_SERVICE_URL: http://localhost:5001
+      REACT_APP_APPOINTMENT_SERVICE_URL: http://localhost:5002
+      REACT_APP_REPORT_SERVICE_URL: http://localhost:5003
+    depends_on:
+      - user-service
+      - appointment-service
+      - report-service
     networks:
       - healthcare-network
 
