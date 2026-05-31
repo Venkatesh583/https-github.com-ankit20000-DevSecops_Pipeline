@@ -4,6 +4,7 @@ import time
 
 import requests
 from flask import Flask, g, jsonify, request
+from flask_cors import CORS
 from flask_jwt_extended import JWTManager, get_jwt, get_jwt_identity, jwt_required
 from datetime import datetime
 
@@ -14,6 +15,7 @@ from observability import configure_observability, log_event
 app = Flask(__name__)
 app.config.from_object(Config)
 app.config['SERVICE_NAME'] = os.getenv('OTEL_SERVICE_NAME', 'appointment-service')
+CORS(app, origins="*")
 
 db.init_app(app)
 jwt = JWTManager(app)

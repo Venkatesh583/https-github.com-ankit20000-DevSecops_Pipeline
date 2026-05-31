@@ -1,0 +1,108 @@
+databases:
+  - name: healthcare-db
+    plan: free
+    databaseName: healthcare_db
+    user: postgres
+    region: oregon
+
+services:
+  # ── User Service ───────────────────────────────────────────────
+  - type: web
+    name: healthcare-user-service
+    runtime: python
+    plan: free
+    region: oregon
+    rootDir: user-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --preload
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: healthcare-db
+          property: connectionString
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_DEBUG
+        value: "false"
+      - key: OTEL_SERVICE_NAME
+        value: user-service
+
+  # ── Appointment Service ────────────────────────────────────────
+  - type: web
+    name: healthcare-appointment-service
+    runtime: python
+    plan: free
+    region: oregon
+    rootDir: appointment-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --preload
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: healthcare-db
+          property: connectionString
+      - key: JWT_SECRET_KEY
+        fromService:
+          name: healthcare-user-service
+          type: web
+          envVarKey: JWT_SECRET_KEY
+      - key: USER_SERVICE_URL
+        value: https://healthcare-user-service.onrender.com
+      - key: FLASK_DEBUG
+        value: "false"
+      - key: OTEL_SERVICE_NAME
+        value: appointment-service
+
+  # ── Report Service ─────────────────────────────────────────────
+  - type: web
+    name: healthcare-report-service
+    runtime: python
+    plan: free
+    region: oregon
+    rootDir: report-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --preload
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: healthcare-db
+          property: connectionString
+      - key: JWT_SECRET_KEY
+        fromService:
+          name: healthcare-user-service
+          type: web
+          envVarKey: JWT_SECRET_KEY
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_S3_BUCKET
+        sync: false
+      - key: AWS_S3_REGION
+        value: us-east-1
+      - key: FLASK_DEBUG
+        value: "false"
+      - key: OTEL_SERVICE_NAME
+        value: report-service
+
+  # ── Frontend (Static Site) ─────────────────────────────────────
+  - type: web
+    name: healthcare-frontend
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npx serve -s build -l $PORT
+    envVars:
+      - key: REACT_APP_USER_SERVICE_URL
+        value: https://healthcare-user-service.onrender.com
+      - key: REACT_APP_APPOINTMENT_SERVICE_URL
+        value: https://healthcare-appointment-service.onrender.com
+      - key: REACT_APP_REPORT_SERVICE_URL
+        value: https://healthcare-report-service.onrender.com

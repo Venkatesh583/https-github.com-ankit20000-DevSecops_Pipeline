@@ -3,6 +3,7 @@ import os
 import re
 
 from flask import Flask, g, jsonify, request
+from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token, get_jwt, get_jwt_identity, jwt_required
 from sqlalchemy.exc import IntegrityError
 
@@ -12,6 +13,7 @@ from observability import configure_observability, log_event
 
 app = Flask(__name__)
 app.config.from_object(Config)
+CORS(app, origins="*")
 
 app.config['SERVICE_NAME'] = os.getenv('OTEL_SERVICE_NAME', 'user-service')
 db.init_app(app)
