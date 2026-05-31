@@ -3,7 +3,7 @@ databases:
     plan: free
     databaseName: healthcare_db
     user: postgres
-    region: oregon
+    region: singapore
 
 services:
   # ── User Service ───────────────────────────────────────────────
@@ -11,7 +11,7 @@ services:
     name: healthcare-user-svc
     runtime: python
     plan: free
-    region: oregon
+    region: singapore
     rootDir: user-service
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --preload
@@ -35,7 +35,7 @@ services:
     name: healthcare-appt-svc
     runtime: python
     plan: free
-    region: oregon
+    region: singapore
     rootDir: appointment-service
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --preload
@@ -62,7 +62,7 @@ services:
     name: healthcare-report-svc
     runtime: python
     plan: free
-    region: oregon
+    region: singapore
     rootDir: report-service
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --preload
@@ -84,23 +84,19 @@ services:
       - key: AWS_S3_BUCKET
         sync: false
       - key: AWS_S3_REGION
-        value: us-east-1
+        value: ap-southeast-1
       - key: FLASK_DEBUG
         value: "false"
       - key: OTEL_SERVICE_NAME
         value: report-service
 
-  # ── Frontend — Static Site (ONE public URL for the whole app) ──
+  # ── Frontend Static Site ───────────────────────────────────────
   - type: static
     name: healthcare-app
     rootDir: frontend
     buildCommand: npm install && npm run build
-    staticPublishPath: ./build
-    pullRequestPreviewsEnabled: false
-    headers:
-      - path: /*
-        name: Cache-Control
-        value: no-cache
+    publishPath: build
+    pullRequestPreviews: no
     routes:
       - type: rewrite
         source: /*
